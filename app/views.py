@@ -5,8 +5,14 @@ Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
 This file contains the routes for your application.
 """
 
-from app import app
-from flask import render_template, request, redirect, url_for
+from app import app, db
+from flask import render_template, request, redirect, url_for, flash, session, abort, send_from_directory
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from .models import Property
+from .forms import MyForm
+from .config import Config
+
 
 
 ###
@@ -23,6 +29,43 @@ def home():
 def about():
     """Render the website's about page."""
     return render_template('about.html', name="Mary Jane")
+
+@app.route('/properties/create', methods=['post', 'get'])
+def new_property():
+    """Render the website's create page"""
+    propertyform = MyForm()
+    if request.method == "POST":
+        if propertyform.validate_on_submit():
+            title = propertyform.title.data
+            numberofbedrooms = propertyform.numberofbedrooms.data
+            numberofbathrooms = propertyform.numberofbathrooms.data
+            location = propertyform.location.data
+            price = propertyform.price.data
+            type = propertyform.type.data
+            description = propertyform.description.data
+            photo = propertyform.photo.data
+
+            property = Property(title, numberofbedrooms, numberofbathrooms, location, price, type, description, photo)
+            db.session.add(property)
+            db.session.commit()
+
+            flash('Property added successfully!')
+            redirect(url_for('properties'))
+
+        flash_errors(propertyform)
+        return render_template('create.html', form=propertyform)
+
+        # db = connect_db()
+        # cur = db.cursor()
+        # cur.execute('insert into properties () values ()', request.form)
+    
+
+    return render_template('create.html', form = propertyform)
+
+@app.route('/properties')
+def properties():
+    form = MyForm()
+    return render_template('create.html', form=form)
 
 
 ###
