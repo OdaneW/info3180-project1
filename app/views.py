@@ -4,14 +4,12 @@ Jinja2 Documentation:    https://jinja.palletsprojects.com/
 Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
 This file contains the routes for your application.
 """
-
+import os
 from app import app, db
 from flask import render_template, request, redirect, url_for, flash, session, abort, send_from_directory
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from .models import Property
 from .forms import MyForm
-from .config import Config
+from werkzeug.utils import secure_filename
 
 
 
@@ -33,40 +31,49 @@ def about():
 @app.route('/properties/create', methods=['post', 'get'])
 def new_property():
     """Render the website's create page"""
+    
     propertyform = MyForm()
     if request.method == "POST":
         if propertyform.validate_on_submit():
+            
             title = propertyform.title.data
-            numberofbedrooms = propertyform.numberofbedrooms.data
-            numberofbathrooms = propertyform.numberofbathrooms.data
+            no_of_bedrooms = propertyform.numberofbedrooms.data
+            no_of_bathrooms = propertyform.numberofbathrooms.data
             location = propertyform.location.data
             price = propertyform.price.data
             type = propertyform.type.data
             description = propertyform.description.data
-            photo = propertyform.photo.data
 
-            property = Property(title, numberofbedrooms, numberofbathrooms, location, price, type, description, photo)
+            file = propertyform.photo.data
+            photo = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], photo))
+
+            property = Property(title, no_of_bedrooms, no_of_bathrooms, location, price, type, description, photo)
+            
             db.session.add(property)
             db.session.commit()
 
-            flash('Property added successfully!')
+            flash('Property added successfully!', 'success')
             redirect(url_for('properties'))
-
+        else:
+            flash('Error in submitting form', 'danger')
         flash_errors(propertyform)
-        return render_template('create.html', form=propertyform)
-
-        # db = connect_db()
-        # cur = db.cursor()
-        # cur.execute('insert into properties () values ()', request.form)
+        
+    return render_template('create.html', form = propertyform)
+        
     
 
-    return render_template('create.html', form = propertyform)
+    
 
-@app.route('/properties')
+@app.route('/properties', methods = ['POST', 'GET'])
 def properties():
-    form = MyForm()
-    return render_template('create.html', form=form)
+    property = Property.query.all()
+    
+    return render_template('properties.html', property=property)
 
+@app.route('/properties/<propertyid>')
+def view_property():
+    return render_template('properties.html')
 
 ###
 # The functions below should be applicable to all Flask apps.

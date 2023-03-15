@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<h1>Properties</h1>
+
+{% include 'flash_messages.html' %}
+
+
+    {% if property %}
+        {% for prop in property %}               
+                
+            <div class="box">
+                <p>{{ prop.id }}</p>
+                <p>{{ prop.title }}</p>
+                <p>{{ prop.no_of_bedrooms }}</p>
+                <p>{{ prop.no_of_bathrooms }}</p>
+                <p>{{ prop.location }}</p>
+                <p>{{ prop.price }}</p>
+                <p>{{ prop.type }}</p>
+                <p>{{ prop.description }}</p>
+                <p>{{ prop.photo }}</p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No properties found.</p>
+    {% endif %}
+        
+
+{% endblock %}
